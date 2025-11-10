@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.25)
+project(ew)
+add_library(ew STATIC "conversions.h" "camera.h")
+target_include_directories(ew PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${raylib_INCLUDE_DIR} ${cyclone_INC_DIR})
+target_link_libraries(ew PRIVATE cyclone raylib)
+install (TARGETS ew DESTINATION lib)
