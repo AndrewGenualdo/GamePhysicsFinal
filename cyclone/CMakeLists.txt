@@ -8,6 +8,8 @@ set(cyclone_sources
 	"forceGenerators/dragForceGenerator.cpp"
 	"forceGenerators/springForceGenerator.cpp"
 	"rigidbody.cpp"
+	"collider.cpp"
+	"octree.cpp"
 )
 set(cyclone_headers
 	"precision.h"
@@ -16,13 +18,11 @@ set(cyclone_headers
 	"particle.h"
 	"forceGenerators/particleForceGenerator.h"
 	"forceGenerators/buoyancyForceGenerator.h"
-	"forceGenerators/dragForceGenerator.h "
+	"forceGenerators/dragForceGenerator.h"
 	"forceGenerators/springForceGenerator.h"
 	"rigidbody.h"
-		collider.cpp
-		collider.h
-		octree.cpp
-		octree.h
+	"collider.h"
+	"octree.h"
 )
 
 set(cyclone_INC_DIR

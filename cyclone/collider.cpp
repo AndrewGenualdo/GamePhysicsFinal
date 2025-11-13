@@ -45,11 +45,9 @@ namespace cyclone {
     }
 
     Collider::Collider() {
-        pBody = new Rigidbody();
         overlapCount = 0;
         type = ColliderType::None;
         offset = Matrix4();
-        transform = *pBody->getTransformMatrix();
 
     }
 
@@ -69,9 +67,8 @@ namespace cyclone {
         this->radius = radius;
     }
 
-    SphereCollider::SphereCollider() {
+    SphereCollider::SphereCollider() : Collider() {
         this->radius = 1;
-        this->setType(ColliderType::Sphere);
     }
 
     Vector3 PlaneCollider::getNormal() const {
@@ -98,7 +95,6 @@ namespace cyclone {
     }
 
     PlaneCollider::PlaneCollider(const Vector3 position, const Vector3 normal) {
-        getRigidbody()->setPosition(position);
         this->offset = normal * position;
         this->normal = normal;
         this->setType(ColliderType::Plane);
