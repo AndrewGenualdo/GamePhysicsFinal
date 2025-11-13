@@ -167,6 +167,7 @@ void cyclone::Rigidbody::setForceAccum(const Vector3 &force_accum) {
 }
 
 cyclone::Rigidbody::Rigidbody()  {
+
     position = Vector3(0, 0, 0);
     velocity = Vector3(0, 0, 0);
     acceleration = Vector3(0, 0, 0);

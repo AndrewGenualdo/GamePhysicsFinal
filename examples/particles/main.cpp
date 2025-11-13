@@ -36,27 +36,93 @@ int main() {
     camera.projection = CAMERA_PERSPECTIVE;     // Camera projection type - perspective vs orthographic
 
     //default settings
-    bool useOctree = true;
+    /*bool useOctree = true;
     bool showOctree = false;
     bool autoSpawn = false;
     float sphereRadius = 0.125f;
     float sphereSpeed = 5.0f;
-    float restitution = 1;
     float roomSize = 10;
-    float octreeMinSize = 0.5f * roomSize * 0.2f;
+    float octreeMinSize = 0.5f * roomSize * 0.2f;*/
+
+    float restitution = 1;
+
+    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 10, 10));
+    Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
+    Model planeModel = LoadModelFromMesh(GenMeshPlane(10, 10, 10, 10));
+
+    std::vector<cyclone::Collider*> colliders;
+    auto *box1 = new cyclone::BoxCollider();
+    box1->getRigidbody()->setPosition(cyclone::Vector3(0, 0, 0));
+    box1->getRigidbody()->setInverseMass(0); //infinite mass
+    box1->setHalfSize(cyclone::Vector3(5, 0.1f, 5));
+    colliders.push_back(box1);
+    auto sphere1 = new cyclone::SphereCollider();
+    sphere1->getRigidbody()->setPosition(cyclone::Vector3(0, 10, 0));
+    sphere1->getRigidbody()->setInverseMass(1);
+    sphere1->setRadius(1);
+    sphere1->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
+    colliders.push_back(sphere1);
+
+    auto *data = new cyclone::CollisionData();
 
     while (!WindowShouldClose()) {
-        cyclone::real SPHERE_RADIUS = sphereRadius;//0.125 * 0.75f;
+
+
+        float deltaTime = GetFrameTime();
+        //Input
+        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+            DisableCursor();
+        }
+        if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON)) {
+            EnableCursor();
+        }
+        //Only allow movement if the cursor is hidden
+        if (IsCursorHidden()) {
+            ew::UpdateFlyCamera(&camera, deltaTime);
+        }
+
+
+        BeginDrawing();
+        //3D mode draws objects in right handed vector space
+        BeginMode3D(camera);
+        ClearBackground(BLACK);
+        BeginBlendMode(BLEND_ALPHA);
+
+
+
+        EndBlendMode();
+        EndMode3D();
+        EndDrawing();
+
+        for (int i = 0; i < colliders.size(); i++) {
+
+            colliders[i]->getRigidbody()->integrate(deltaTime);
+        }
+
+        for(int i = 0; i < colliders.size(); i++) {
+            for (int j = i+1; j < colliders.size(); j++) {
+                if (colliders[i]->getType() == cyclone::ColliderType::Plane && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
+                    if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]))) cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]), data);
+                } else if (colliders[i]->getType() == cyclone::ColliderType::Sphere && colliders[j]->getType() == cyclone::ColliderType::Plane) {
+                    if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::PlaneCollider &>(*colliders[j]))) cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::PlaneCollider &>(*colliders[j]), data);
+                } else if (colliders[i]->getType() == cyclone::ColliderType::Sphere && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
+                    if (cyclone::IntersectionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]))) cyclone::CollisionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]), data);
+                }
+            }
+        }
+
+        data->resolveAllContacts(restitution);
+        data->reset();
+
+        /*cyclone::real SPHERE_RADIUS = sphereRadius;//0.125 * 0.75f;
         const int RESTITUTION = restitution;
 
-        Model sphereModel = LoadModelFromMesh(GenMeshSphere(SPHERE_RADIUS, 10, 10));
-        Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
-        Model planeModel = LoadModelFromMesh(GenMeshPlane(10, 10, 10, 10));
+
 
         cyclone::CollisionData *data = new cyclone::CollisionData();
         data->reset();
 
-        std::vector<cyclone::Collider*> colliders;
+
 
         const int ROOM_SIZE = roomSize;
 
@@ -201,7 +267,7 @@ int main() {
                                     cyclone::CollisionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*a), static_cast<const cyclone::SphereCollider &>(*b), data);
                                 }
 
-                                /*if (a->getType() == cyclone::ColliderType::Plane && b->getType() == cyclone::ColliderType::Sphere) {
+                                *//*if (a->getType() == cyclone::ColliderType::Plane && b->getType() == cyclone::ColliderType::Sphere) {
                                     if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*b), static_cast<const cyclone::PlaneCollider &>(*a))) {
                                         cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*b), static_cast<const cyclone::PlaneCollider &>(*a), data);
                                     }
@@ -213,7 +279,7 @@ int main() {
                                     if (cyclone::IntersectionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*a), static_cast<const cyclone::SphereCollider &>(*b))) {
                                         cyclone::CollisionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*a), static_cast<const cyclone::SphereCollider &>(*b), data);
                                     }
-                                }*/
+                                }*//*
                             }
                         }
                     }
@@ -362,12 +428,11 @@ int main() {
 
             EndDrawing();
         }
+        delete data;*/
+        for (auto & collider : colliders) delete collider;
         UnloadModel(sphereModel);
         UnloadModel(cubeModel);
         UnloadModel(planeModel);
-
-        for (auto & collider : colliders) delete collider;
-        delete data;
     }
 
 
