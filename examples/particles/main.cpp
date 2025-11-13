@@ -9,6 +9,7 @@
 #include <queue>
 #include <rlImGui.h>
 #include <set>
+#include <map>
 
 #include <ew/camera.h>
 
@@ -66,6 +67,14 @@ int main() {
     auto *data = new cyclone::CollisionData();
     data->reset();
 
+    typedef bool (*intersectionTest)(const cyclone::Collider &, const cyclone::Collider &);
+    typedef int (*collisionTest)(const cyclone::Collider &, const cyclone::Collider &, const cyclone::CollisionData &);
+    std::map<int, std::pair<intersectionTest, collisionTest>> testTypes = std::map<int, std::pair<intersectionTest, collisionTest>>();
+    #define addTestType(a, b, c, d) testTypes[static_cast<int>(a) & static_cast<int>(b)] = std::make_pair(reinterpret_cast<intersectionTest>(c), reinterpret_cast<collisionTest>(d));
+    addTestType(cyclone::ColliderType::Sphere, cyclone::ColliderType::Sphere, cyclone::IntersectionTests::SphereSphere, cyclone::CollisionTests::SphereSphere);
+    addTestType(cyclone::ColliderType::Sphere, cyclone::ColliderType::Plane, cyclone::IntersectionTests::SpherePlane, cyclone::CollisionTests::SphereTruePlane);
+    addTestType(cyclone::ColliderType::Sphere, cyclone::ColliderType::Box, cyclone::IntersectionTests::SphereBox, cyclone::CollisionTests::SphereBox);
+
     while (!WindowShouldClose()) {
 
 
@@ -84,9 +93,9 @@ int main() {
 
 
 
-        for (int i = 0; i < colliders.size(); i++) colliders[i]->getRigidbody()->integrate(deltaTime);
+        for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
 
-        for(int i = 0; i < colliders.size(); i++) {
+        /*for(int i = 0; i < colliders.size(); i++) {
             for (int j = i+1; j < colliders.size(); j++) {
                 if (colliders[i]->getType() == cyclone::ColliderType::Plane && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
                     if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]))) cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]), data);
@@ -95,6 +104,12 @@ int main() {
                 } else if (colliders[i]->getType() == cyclone::ColliderType::Sphere && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
                     if (cyclone::IntersectionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]))) cyclone::CollisionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]), data);
                 }
+            }
+        }*/
+        for (int i = 0; i < colliders.size(); i++) {
+            for (int j = i; j < colliders.size(); j++) {
+                bool swap = static_cast<int>(colliders[i]->getType()) > static_cast<int>(colliders[j]->getType());
+
             }
         }
 

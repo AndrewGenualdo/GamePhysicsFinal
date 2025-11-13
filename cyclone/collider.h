@@ -13,7 +13,7 @@ namespace cyclone {
         None = 0,
         Sphere = 1,
         Plane = 2,
-        Box = 3
+        Box = 4
     };
 
     class Collider {
