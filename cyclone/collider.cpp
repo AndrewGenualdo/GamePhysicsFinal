@@ -113,7 +113,7 @@ namespace cyclone {
         this->halfSize = halfSize;
     }
 
-    BoxCollider::BoxCollider() {
+    BoxCollider::BoxCollider() : Collider() {
         this->halfSize = Vector3(0.5, 0.5, 0.5);
         this->setType(ColliderType::Box);
     }

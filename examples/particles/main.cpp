@@ -64,6 +64,7 @@ int main() {
     colliders.push_back(sphere1);
 
     auto *data = new cyclone::CollisionData();
+    data->reset();
 
     while (!WindowShouldClose()) {
 
@@ -82,22 +83,8 @@ int main() {
         }
 
 
-        BeginDrawing();
-        //3D mode draws objects in right handed vector space
-        BeginMode3D(camera);
-        ClearBackground(BLACK);
-        BeginBlendMode(BLEND_ALPHA);
 
-
-
-        EndBlendMode();
-        EndMode3D();
-        EndDrawing();
-
-        for (int i = 0; i < colliders.size(); i++) {
-
-            colliders[i]->getRigidbody()->integrate(deltaTime);
-        }
+        for (int i = 0; i < colliders.size(); i++) colliders[i]->getRigidbody()->integrate(deltaTime);
 
         for(int i = 0; i < colliders.size(); i++) {
             for (int j = i+1; j < colliders.size(); j++) {
@@ -113,6 +100,68 @@ int main() {
 
         data->resolveAllContacts(restitution);
         data->reset();
+
+        BeginDrawing();
+        //3D mode draws objects in right handed vector space
+        BeginMode3D(camera);
+        ClearBackground(BLACK);
+        BeginBlendMode(BLEND_ALPHA);
+
+        for (auto collider : colliders) collider->updateInternals();
+
+        for(int i = 0; i < colliders.size(); i++) {
+
+                cyclone::Collider* collider = colliders[i];
+
+                cyclone::Vector3 randColorVec = cyclone::Vector3::random(i);
+                Color randColor;
+                randColor.r = randColorVec.x * 256;
+                randColor.g = randColorVec.y * 256;
+                randColor.b = randColorVec.z * 256;
+                randColor.a = 255;
+
+                Color planeColor = WHITE;
+                planeColor.a = 50;
+
+                Color color = collider->getType() == cyclone::ColliderType::Plane ? planeColor : randColor;
+                switch(collider->getType()) {
+                    case cyclone::ColliderType::Sphere: {
+                        sphereModel.transform = ew::CTR(*collider->getRigidbody()->getTransformMatrix());
+                        DrawModel(sphereModel, {0,0,0}, 1, color);
+                        //DrawModelWires(sphereModel, {0,0,0}, 1.0f, BLACK);
+                        break;
+                    }
+                    case cyclone::ColliderType::Box: {
+                        cubeModel.transform = ew::CTR(*collider->getRigidbody()->getTransformMatrix());
+                        DrawModel(cubeModel, {0,0,0}, 1, color);
+                        break;
+                    }
+                    case cyclone::ColliderType::Plane: {
+                        const cyclone::PlaneCollider &plane = static_cast<const cyclone::PlaneCollider &>(*collider);
+                        Vector3 normal = {plane.getNormal().x, plane.getNormal().y, plane.getNormal().z};
+                        Vector3 up = {0, 1, 0};
+                        Vector3 axis = Vector3CrossProduct(up, normal); //axis to rotate around
+                        Matrix rotation = MatrixRotate(axis, acosf(Vector3DotProduct(up, normal)));
+
+                        Vector3 pos = {plane.getPosition().x, plane.getPosition().y, plane.getPosition().z};
+
+                        DrawLine3D(pos, pos + normal, RED); //to show normals, was very helpful for debugging
+                        DrawModel(planeModel, {0, 0, 0}, 1.0f, color);
+                        DrawModelWires(planeModel, {0, 0, 0}, 1.0f, BLACK);
+                        break;
+                    }
+                    default: std::cout << "????" << std::endl; break;
+                }
+            }
+
+        EndBlendMode();
+        EndMode3D();
+
+        DrawFPS(GetScreenWidth() - 128, 16);
+
+        EndDrawing();
+
+
 
         /*cyclone::real SPHERE_RADIUS = sphereRadius;//0.125 * 0.75f;
         const int RESTITUTION = restitution;
@@ -429,10 +478,10 @@ int main() {
             EndDrawing();
         }
         delete data;*/
-        for (auto & collider : colliders) delete collider;
-        UnloadModel(sphereModel);
-        UnloadModel(cubeModel);
-        UnloadModel(planeModel);
+        //for (auto & collider : colliders) delete collider;
+        //UnloadModel(sphereModel);
+        //UnloadModel(cubeModel);
+        //UnloadModel(planeModel);
     }
 
 
