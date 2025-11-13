@@ -131,8 +131,8 @@ namespace cyclone {
     bool IntersectionTests::SphereBox(const SphereCollider &a, const BoxCollider &b) {
         const Vector3 p = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
         const Vector3 nearest = p.clamp(-b.getHalfSize(), b.getHalfSize());
-        const real d = (nearest - p).magnitude();
-        return d < a.getRadius();
+        const real d = (nearest - p).squareMagnitude();
+        return d <= a.getRadius() * a.getRadius();
     }
 
     bool IntersectionTests::PlanePlane(const PlaneCollider &a, const PlaneCollider &b) {
@@ -163,23 +163,21 @@ namespace cyclone {
     bool IntersectionTests::BoxBox(const BoxCollider &a, const BoxCollider &b) {
         const Vector3 toCenter = a.getAxis(3) - b.getAxis(3);
         #define TEST_OVERLAP(axis) overlapOnAxis(a, b, (axis), toCenter)
-        return (
-            TEST_OVERLAP(a.getAxis(0)) && // a's face normals
-            TEST_OVERLAP(a.getAxis(1)) &&
-            TEST_OVERLAP(a.getAxis(2)) &&
-            TEST_OVERLAP(b.getAxis(0)) && // b's face noramls
-            TEST_OVERLAP(b.getAxis(1)) &&
-            TEST_OVERLAP(b.getAxis(2)) &&
-            TEST_OVERLAP(a.getAxis(0) % b.getAxis(0)) && // cross products between edges - 3 unique edge directions per cube (so nine tests)
-            TEST_OVERLAP(a.getAxis(0) % b.getAxis(1)) &&
-            TEST_OVERLAP(a.getAxis(0) % b.getAxis(2)) &&
-            TEST_OVERLAP(a.getAxis(1) % b.getAxis(0)) &&
-            TEST_OVERLAP(a.getAxis(1) % b.getAxis(1)) &&
-            TEST_OVERLAP(a.getAxis(1) % b.getAxis(2)) &&
-            TEST_OVERLAP(a.getAxis(2) % b.getAxis(0)) &&
-            TEST_OVERLAP(a.getAxis(2) % b.getAxis(1)) &&
-            TEST_OVERLAP(a.getAxis(2) % b.getAxis(2))
-            );
+        return TEST_OVERLAP(a.getAxis(0)) && // a's face normals
+               TEST_OVERLAP(a.getAxis(1)) &&
+               TEST_OVERLAP(a.getAxis(2)) &&
+               TEST_OVERLAP(b.getAxis(0)) && // b's face noramls
+               TEST_OVERLAP(b.getAxis(1)) &&
+               TEST_OVERLAP(b.getAxis(2)) &&
+               TEST_OVERLAP(a.getAxis(0) % b.getAxis(0)) && // cross products between edges - 3 unique edge directions per cube (so nine tests)
+               TEST_OVERLAP(a.getAxis(0) % b.getAxis(1)) &&
+               TEST_OVERLAP(a.getAxis(0) % b.getAxis(2)) &&
+               TEST_OVERLAP(a.getAxis(1) % b.getAxis(0)) &&
+               TEST_OVERLAP(a.getAxis(1) % b.getAxis(1)) &&
+               TEST_OVERLAP(a.getAxis(1) % b.getAxis(2)) &&
+               TEST_OVERLAP(a.getAxis(2) % b.getAxis(0)) &&
+               TEST_OVERLAP(a.getAxis(2) % b.getAxis(1)) &&
+               TEST_OVERLAP(a.getAxis(2) % b.getAxis(2));
     }
 
     Contact::Contact() {
@@ -192,8 +190,8 @@ namespace cyclone {
     }
 
     void CollisionData::reset() {
-        for (int i = 0; i < contacts.size(); i++) {
-            delete contacts[i];
+        for (const auto & contact : contacts) {
+            delete contact;
         }
         contacts.clear();
     }
@@ -207,8 +205,8 @@ namespace cyclone {
     }
 
     CollisionData::~CollisionData() {
-        for (int i = 0; i < contacts.size(); i++) {
-            delete contacts[i];
+        for (const auto & contact : contacts) {
+            delete contact;
         }
     }
 
@@ -241,13 +239,57 @@ namespace cyclone {
         contact->penetration = penetration;
         contact->point = sphere.getPosition() - normal * sphere.getRadius();
         data->addContacts(contact);
-        return 0;
+        return 1;
     }
 
+    int CollisionTests::SphereBox(const SphereCollider &sphere, const BoxCollider &box, CollisionData *data) {
+        //sphere center -> box local space
+        const Vector3 relCenter = box.getRigidbody()->getTransformMatrix()->transformInverse(*sphere.getRigidbody()->getPosition());
+
+        //gets point box closest to sphere center
+        const Vector3 closestPoint = relCenter.clamp(-box.getHalfSize(), box.getHalfSize());
+
+        //vector from closest point to sphere center
+        const Vector3 localDelta = relCenter - closestPoint;
+
+        Contact *contact = new Contact();
+        contact->body[0] = sphere.getRigidbody();
+        contact->body[1] = box.getRigidbody();
+
+        Vector3 normal;
+        real distance = localDelta.magnitude();
+
+        //if sphere center is inside box or not
+        if (distance > 0.0001f) { //not in box
+            //normal to world space
+            normal = box.getRigidbody()->getTransformMatrix()->transformDirection(localDelta * (1.0f / distance));
+            normal.normalise();
+
+        } else { //in box
+            const Vector3 boxCenter = *box.getRigidbody()->getPosition();
+            normal = (*sphere.getRigidbody()->getPosition() - boxCenter);
+            if (normal.squareMagnitude() < 0.0001f)
+                normal = Vector3(1, 0, 0); //arbitrary default direction
+            normal.normalise();
+            distance = 0.0f;
+        }
+
+        //contact point in world space
+        //closest point transformed to world space + normal scaled by penetration
+        contact->point = box.getRigidbody()->getTransformMatrix()->transform(closestPoint);;
+        contact->normal = normal;
+        contact->penetration = sphere.getRadius() - distance;
+
+        // Add the contact to the data
+        data->addContacts(contact);
+        return 1;
+    }
+
+
     void ContactResolver::resolveContacts(const std::vector<Contact*> *contacts, const real restitution) {
-        for (int i = 0; i < contacts->size(); i++) {
-            resolveVelocity((*contacts)[i], restitution);
-            resolveInterpenetration((*contacts)[i]);
+        for (const auto contact : *contacts) {
+            resolveVelocity(contact, restitution);
+            resolveInterpenetration(contact);
         }
     }
 
