@@ -95,6 +95,8 @@ int main() {
 
         for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
 
+
+
         /*for(int i = 0; i < colliders.size(); i++) {
             for (int j = i+1; j < colliders.size(); j++) {
                 if (colliders[i]->getType() == cyclone::ColliderType::Plane && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
@@ -106,10 +108,28 @@ int main() {
                 }
             }
         }*/
+
+
+
         for (int i = 0; i < colliders.size(); i++) {
             for (int j = i; j < colliders.size(); j++) {
                 bool swap = static_cast<int>(colliders[i]->getType()) > static_cast<int>(colliders[j]->getType());
-
+                cyclone::Collider *a;
+                cyclone::Collider *b;
+                if (swap) {
+                    a = colliders[j];
+                    b = colliders[i];
+                } else {
+                    a = colliders[i];
+                    b = colliders[j];
+                }
+                int typeKey = static_cast<int>(a->getType()) & static_cast<int>(b->getType());
+                if (testTypes.find(typeKey) != testTypes.end()) {
+                    auto tests = testTypes[typeKey];
+                    if ((*tests.first)(*a, *b)) {
+                        (*tests.second)(*a, *b, *data);
+                    }
+                }
             }
         }
 

@@ -74,12 +74,12 @@ namespace cyclone {
 
     class IntersectionTests {
     public:
-        static bool SphereSphere(const SphereCollider& a, const SphereCollider& b);
-        static bool SpherePlane(const SphereCollider& a, const PlaneCollider& b);
-        static bool SphereBox(const SphereCollider& a, const BoxCollider& b);
-        static bool PlanePlane(const PlaneCollider& a, const PlaneCollider& b);
-        static bool PlaneBox(const PlaneCollider& a, const BoxCollider& b);
-        static bool BoxBox(const BoxCollider& a, const BoxCollider& b);
+        static bool SphereSphere(const Collider& a, const Collider& b);
+        static bool SpherePlane(const Collider& a, const Collider& b);
+        static bool SphereBox(const Collider& a, const Collider& b);
+        static bool PlanePlane(const Collider& a, const Collider& b);
+        static bool PlaneBox(const Collider& a, const Collider& b);
+        static bool BoxBox(const Collider& a, const Collider& b);
     };
 
     class Contact{
@@ -108,9 +108,9 @@ namespace cyclone {
 
     class CollisionTests {
     public:
-        static int SphereSphere(const SphereCollider& a, const SphereCollider& b, CollisionData* data);
-        static int SphereTruePlane(const SphereCollider& sphere, const PlaneCollider& plane, CollisionData* data);
-        static int SphereBox(const SphereCollider& sphere, const BoxCollider& box, CollisionData* data);
+        static int SphereSphere(const Collider& a, const Collider& b, CollisionData* data);
+        static int SphereTruePlane(const Collider& a, const Collider& b, CollisionData* data);
+        static int SphereBox(const Collider& a, const Collider& b, CollisionData* data);
     };
 
     class ContactResolver{
