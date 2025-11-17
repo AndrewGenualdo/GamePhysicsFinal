@@ -47,7 +47,7 @@ int main() {
 
     float restitution = 1;
 
-    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 10, 10));
+    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 100, 100));
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
     Model planeModel = LoadModelFromMesh(GenMeshPlane(10, 10, 10, 10));
 
@@ -60,7 +60,7 @@ int main() {
     auto sphere1 = new cyclone::SphereCollider();
     sphere1->getRigidbody()->setPosition(cyclone::Vector3(0, 10, 0));
     sphere1->getRigidbody()->setInverseMass(1);
-    sphere1->setRadius(1);
+    sphere1->setRadius(0.3f);
     sphere1->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
     colliders.push_back(sphere1);
 
@@ -95,24 +95,8 @@ int main() {
 
         for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
 
-
-
-        /*for(int i = 0; i < colliders.size(); i++) {
-            for (int j = i+1; j < colliders.size(); j++) {
-                if (colliders[i]->getType() == cyclone::ColliderType::Plane && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
-                    if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]))) cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*colliders[j]), static_cast<const cyclone::PlaneCollider &>(*colliders[i]), data);
-                } else if (colliders[i]->getType() == cyclone::ColliderType::Sphere && colliders[j]->getType() == cyclone::ColliderType::Plane) {
-                    if (cyclone::IntersectionTests::SpherePlane(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::PlaneCollider &>(*colliders[j]))) cyclone::CollisionTests::SphereTruePlane(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::PlaneCollider &>(*colliders[j]), data);
-                } else if (colliders[i]->getType() == cyclone::ColliderType::Sphere && colliders[j]->getType() == cyclone::ColliderType::Sphere) {
-                    if (cyclone::IntersectionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]))) cyclone::CollisionTests::SphereSphere(static_cast<const cyclone::SphereCollider &>(*colliders[i]), static_cast<const cyclone::SphereCollider &>(*colliders[j]), data);
-                }
-            }
-        }*/
-
-
-
         for (int i = 0; i < colliders.size(); i++) {
-            for (int j = i; j < colliders.size(); j++) {
+            for (int j = i + 1; j < colliders.size(); j++) {
                 bool swap = static_cast<int>(colliders[i]->getType()) > static_cast<int>(colliders[j]->getType());
                 cyclone::Collider *a;
                 cyclone::Collider *b;
@@ -160,19 +144,22 @@ int main() {
 
                 Color color = collider->getType() == cyclone::ColliderType::Plane ? planeColor : randColor;
                 switch(collider->getType()) {
+
                     case cyclone::ColliderType::Sphere: {
-                        sphereModel.transform = ew::CTR(*collider->getRigidbody()->getTransformMatrix());
+                        const cyclone::SphereCollider &sphere = reinterpret_cast<const cyclone::SphereCollider &>(*collider);
+                        sphereModel.transform = MatrixScale(sphere.getRadius(), sphere.getRadius(), sphere.getRadius()) * ew::CTR(*collider->getRigidbody()->getTransformMatrix());
                         DrawModel(sphereModel, {0,0,0}, 1, color);
                         //DrawModelWires(sphereModel, {0,0,0}, 1.0f, BLACK);
                         break;
                     }
                     case cyclone::ColliderType::Box: {
-                        cubeModel.transform = ew::CTR(*collider->getRigidbody()->getTransformMatrix());
+                        const cyclone::BoxCollider &box = reinterpret_cast<const cyclone::BoxCollider &>(*collider);
+                        cubeModel.transform = MatrixScale(box.getHalfSize().x, box.getHalfSize().y, box.getHalfSize().z) * ew::CTR(*collider->getRigidbody()->getTransformMatrix());
                         DrawModel(cubeModel, {0,0,0}, 1, color);
                         break;
                     }
                     case cyclone::ColliderType::Plane: {
-                        const cyclone::PlaneCollider &plane = static_cast<const cyclone::PlaneCollider &>(*collider);
+                        const cyclone::PlaneCollider &plane = reinterpret_cast<const cyclone::PlaneCollider &>(*collider);
                         Vector3 normal = {plane.getNormal().x, plane.getNormal().y, plane.getNormal().z};
                         Vector3 up = {0, 1, 0};
                         Vector3 axis = Vector3CrossProduct(up, normal); //axis to rotate around
