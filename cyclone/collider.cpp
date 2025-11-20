@@ -135,7 +135,7 @@ namespace cyclone {
         const BoxCollider &box = reinterpret_cast<const BoxCollider &>(b);
 
         const Vector3 p = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
-        const Vector3 nearest = p.clamp(-box.getHalfSize(), box.getHalfSize());
+        const Vector3 nearest = p.clamp(-box.getHalfSize() * 0.5f, box.getHalfSize() * 0.5f);
         const real d = (nearest - p).squareMagnitude();
         return d <= sphere.getRadius() * sphere.getRadius();
     }
@@ -265,7 +265,7 @@ namespace cyclone {
         const Vector3 relCenter = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
 
         //gets point box closest to sphere center
-        const Vector3 closestPoint = relCenter.clamp(-box.getHalfSize(), box.getHalfSize());
+        const Vector3 closestPoint = relCenter.clamp(-box.getHalfSize() * 0.5f, box.getHalfSize() * 0.5f);
 
         //vector from closest point to sphere center
         const Vector3 localDelta = relCenter - closestPoint;
