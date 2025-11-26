@@ -16,7 +16,7 @@ set(cyclone_headers
 	"particle.h"
 	"forceGenerators/particleForceGenerator.h"
 	"forceGenerators/buoyancyForceGenerator.h"
-	"forceGenerators/dragForceGenerator.h "
+	"forceGenerators/dragForceGenerator.h"
 	"forceGenerators/springForceGenerator.h"
 	"rigidbody.h"
 		collider.cpp
