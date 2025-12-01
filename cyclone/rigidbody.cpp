@@ -40,6 +40,11 @@ cyclone::real* cyclone::Rigidbody::getInverseMass() {
     return &inverseMass;
 }
 
+cyclone::Vector3 * cyclone::Rigidbody::getMassCenter()
+{
+    return &relMassCenter;
+}
+
 void cyclone::Rigidbody::setInverseMass(const real inverseMass) {
     this->inverseMass = inverseMass;
 }
@@ -69,6 +74,7 @@ void cyclone::Rigidbody::setTorqueAccum(const Vector3 &torqueAccum) {
 }
 
 cyclone::Matrix3* cyclone::Rigidbody::getInverseInertiaTensor() {
+
     return &inverseInertiaTensor;
 }
 
@@ -85,6 +91,8 @@ void cyclone::Rigidbody::setAngularDamping(const real angularDamping) {
 }
 
 cyclone::Matrix3* cyclone::Rigidbody::getInverseInertiaTensorWorld() {
+    calculateDerivedData();
+
     return &inverseInertiaTensorWorld;
 }
 
@@ -136,6 +144,11 @@ void cyclone::Rigidbody::addForceAtPoint(const Vector3 &force, const Vector3 &po
 void cyclone::Rigidbody::setMass(const real mass) {
     if (mass != 0) setInverseMass(1 / mass);
     else setInverseMass(0);
+}
+
+void cyclone::Rigidbody::setMassCenter(const Vector3 &relMassCenter)
+{
+    this->relMassCenter = relMassCenter;
 }
 
 void cyclone::Rigidbody::setInertiaTensor(const Matrix3 &inertiaTensor) {

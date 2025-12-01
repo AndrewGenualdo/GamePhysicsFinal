@@ -117,6 +117,7 @@ namespace cyclone {
     public:
         static void resolveContacts(const std::vector<Contact*> *contacts, real restitution);
     private:
+        static void resolveRotationalVelocity(const Contact *contact, real restitution);
         static void resolveVelocity(const Contact *contact, real restitution);
         static void resolveInterpenetration(const Contact *contact);
     };

@@ -45,9 +45,11 @@ namespace cyclone {
     }
 
     Collider::Collider() {
+        pBody = new Rigidbody();
         overlapCount = 0;
         type = ColliderType::None;
         offset = Matrix4();
+        transform = *pBody->getTransformMatrix();
 
     }
 
@@ -67,8 +69,9 @@ namespace cyclone {
         this->radius = radius;
     }
 
-    SphereCollider::SphereCollider() : Collider() {
+    SphereCollider::SphereCollider() {
         this->radius = 1;
+        this->setType(ColliderType::Sphere);
     }
 
     Vector3 PlaneCollider::getNormal() const {
@@ -95,6 +98,7 @@ namespace cyclone {
     }
 
     PlaneCollider::PlaneCollider(const Vector3 position, const Vector3 normal) {
+        getRigidbody()->setPosition(position);
         this->offset = normal * position;
         this->normal = normal;
         this->setType(ColliderType::Plane);
@@ -307,6 +311,8 @@ namespace cyclone {
         }
     }
 
+
+
     void ContactResolver::resolveVelocity(const Contact *contact, const real restitution) {
         const Vector3 relVel = *contact->body[0]->getVelocity() - *contact->body[1]->getVelocity();
         const real sepVel = relVel * contact->normal;
@@ -315,8 +321,15 @@ namespace cyclone {
         const Vector3 j = contact->normal * (deltaVel / (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()));
         const Vector3 deltaA = j * *contact->body[0]->getInverseMass();
         const Vector3 deltaB = -j * *contact->body[1]->getInverseMass();
+
+        const Vector3 rotDeltaA = -contact->body[0]->getInverseInertiaTensorWorld()->transform((contact->point - *contact->body[0]->getPosition()).vectorProduct(j)) * *contact->body[0]->getInverseMass();
+        const Vector3 rotDeltaB = -contact->body[1]->getInverseInertiaTensorWorld()->transform((contact->point - *contact->body[1]->getPosition()).vectorProduct(j)) * *contact->body[1]->getInverseMass();
         contact->body[0]->addImpulse(deltaA);
         contact->body[1]->addImpulse(deltaB);
+        contact->body[0]->setAngularVelocity(*contact->body[0]->getAngularVelocity() + rotDeltaA);
+        contact->body[1]->setAngularVelocity(*contact->body[1]->getAngularVelocity() + rotDeltaB);
+
+
     }
 
     void ContactResolver::resolveInterpenetration(const Contact *contact) {

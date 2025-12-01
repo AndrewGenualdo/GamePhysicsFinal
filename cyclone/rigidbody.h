@@ -9,6 +9,7 @@
 namespace cyclone {
     class Rigidbody {
         Vector3 position;
+        Vector3 relMassCenter;
         Vector3 velocity;
         Vector3 acceleration;
         real linearDamping;
@@ -31,6 +32,7 @@ namespace cyclone {
         [[nodiscard]] Vector3* getAcceleration();
         [[nodiscard]] real* getLinearDamping();
         [[nodiscard]] real* getInverseMass();
+        [[nodiscard]] Vector3* getMassCenter();
         [[nodiscard]] Quaternion* getOrientation();
         [[nodiscard]] Vector3* getForceAccum();
         [[nodiscard]] Vector3* getAngularVelocity();
@@ -45,11 +47,14 @@ namespace cyclone {
         void setAcceleration(const Vector3 &acceleration);
         void setLinearDamping(real linearDamping);
         void setInverseMass(real inverseMass);
+        void setMass(real mass);
+        void setMassCenter(const Vector3 &relMassCenter);
         void setOrientation(const Quaternion &orientation);
         void setForceAccum(const Vector3 &force_accum);
         void setAngularVelocity(const Vector3 &angularVelocity);
         void setTorqueAccum(const Vector3 &torqueAccum);
         void setInverseInertiaTensor(const Matrix3 &inverseInertiaTensor);
+        void setInertiaTensor(const Matrix3 &inertiaTensor);
         void setAngularDamping(real angularDamping);
         void setInverseInertiaTensorWorld(const Matrix3 &inverseInertiaTensorWorld);
 
@@ -58,8 +63,7 @@ namespace cyclone {
         void addForce(const Vector3& force);
         void addTorque(const Vector3& torque);
         void addForceAtPoint(const Vector3& force, const Vector3& point);
-        void setMass(real mass);
-        void setInertiaTensor(const Matrix3 &inertiaTensor);
+
 
     private:
         //clears forceAccum and torqueAccum
