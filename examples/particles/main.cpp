@@ -30,7 +30,7 @@ int main() {
     rlImGuiSetup(true);
 
     Camera3D camera = { 0 };
-    camera.position = {0.0f, 10.0f, 15.0f };   // Camera position
+    camera.position = {-10.0f, 7.0f, 15.0f };   // Camera position
     camera.target = { 0.0f, 0.0f, 0.0f };       // Camera looking at point
     camera.up = { 0.0f, 1.0f, 0.0f };           // Camera up vecto
     camera.fovy = 45.0f;                        // Camera vertical field-of-view in degrees
@@ -45,36 +45,39 @@ int main() {
     float roomSize = 10;
     float octreeMinSize = 0.5f * roomSize * 0.2f;*/
 
-    float restitution = 0.99f;
+    float restitution = 0.75f;
 
-    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 100, 100));
+    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 25, 25));
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
     Model planeModel = LoadModelFromMesh(GenMeshPlane(10, 10, 10, 10));
 
     std::vector<cyclone::Collider*> colliders;
-    auto sphere1 = new cyclone::SphereCollider();
-    sphere1->getRigidbody()->setPosition(cyclone::Vector3(0, 10, 0));
-    sphere1->getRigidbody()->setInverseMass(1);
-    sphere1->setRadius(0.3541666666666667f);
-    sphere1->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
-    colliders.push_back(sphere1);
+    //bowling ball
+    auto ball = new cyclone::SphereCollider();
+    ball->setRadius(0.3541666666666667f);
+    ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
+    ball->getRigidbody()->setInverseMass(1.0f / 7.26f);
+    ball->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
+    colliders.push_back(ball);
 
-#define addBoxCollider(pos, scale, mass) {auto newBox = new cyclone::BoxCollider(); newBox->getRigidbody()->setPosition(pos); newBox->setHalfSize(scale);newBox->getRigidbody()->setInverseMass(mass); if(mass != 0) newBox->getRigidbody()->setAcceleration(cyclone::Vector3(0, 0, 0)); colliders.push_back(newBox);}
+#define addBoxCollider(pos, scale, invMass) {auto newBox = new cyclone::BoxCollider(); newBox->getRigidbody()->setPosition(pos); newBox->setHalfSize(scale); newBox->getRigidbody()->setInverseMass(invMass); if(invMass != 0) newBox->getRigidbody()->setAcceleration(cyclone::Vector3(0, 0, 0)); colliders.push_back(newBox);}
 
     addBoxCollider(cyclone::Vector3(0, 0, -29), cyclone::Vector3(3.5, 1, 60), 0);
     addBoxCollider(cyclone::Vector3(0, -0.55, -29), cyclone::Vector3(5.6, 0.1, 60), 0);
     addBoxCollider(cyclone::Vector3(2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
     addBoxCollider(cyclone::Vector3(-2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
-    addBoxCollider(cyclone::Vector3(-1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(-1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(0, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
-    addBoxCollider(cyclone::Vector3(0, 1.125, -56.1354), cyclone::Vector3(0.395833, 1.25, 0.395833), 1);
+    addBoxCollider(cyclone::Vector3(-1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(-1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(0, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+    addBoxCollider(cyclone::Vector3(0, 1.125, -56.1354), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+
+    camera.target = {colliders[colliders.size() - 1]->getPosition().x, colliders[colliders.size() - 1]->getPosition().y, colliders[colliders.size() - 1]->getPosition().z};
 
     auto *data = new cyclone::CollisionData();
     data->reset();
@@ -87,12 +90,16 @@ int main() {
     addTestType(cyclone::ColliderType::Sphere, cyclone::ColliderType::Plane, cyclone::IntersectionTests::SpherePlane, cyclone::CollisionTests::SphereTruePlane);
     addTestType(cyclone::ColliderType::Sphere, cyclone::ColliderType::Box, cyclone::IntersectionTests::SphereBox, cyclone::CollisionTests::SphereBox);
 
+
+    Vector2 mouseStart = {-1,-1};
+    float rotation = 0;
+    bool isDragging = false;
     while (!WindowShouldClose()) {
 
 
         float deltaTime = GetFrameTime();
         //Input
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        /*if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
             DisableCursor();
         }
         if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON)) {
@@ -101,6 +108,31 @@ int main() {
         //Only allow movement if the cursor is hidden
         if (IsCursorHidden()) {
             ew::UpdateFlyCamera(&camera, deltaTime);
+        }*/
+        float mouseMult = 0.1f;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            mouseStart = GetMousePosition();
+            isDragging = true;
+            rotation = 0;
+        }
+        if (isDragging) {
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+                Vector2 mouseEnd = GetMousePosition();
+                Vector2 mouseDelta = mouseEnd - mouseStart;
+                colliders[0]->getRigidbody()->addImpulse(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
+                isDragging = false;
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+                isDragging = false;
+            } else rotation += GetMouseWheelMove();
+        }
+
+
+
+        if (ball->getPosition().z < -30) {
+            camera.position = {-10.0f, 7.0f, -35.0f };
+        } else {
+            camera.position = {-10.0f, 7.0f, 15.0f };
         }
 
         if (IsKeyPressed(KEY_P)) {
@@ -115,6 +147,10 @@ int main() {
             }
 
             std::cout << std::endl;
+        }
+        if (IsKeyPressed(KEY_R)) {
+            ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
+            ball->getRigidbody()->setVelocity(cyclone::Vector3(0, 0, 0));
         }
 
         for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
@@ -201,10 +237,23 @@ int main() {
                 }
             }
 
+        if (isDragging) {
+            Vector2 mouseEnd = GetMousePosition();
+            Vector2 mouseDelta = mouseEnd - mouseStart;
+            cyclone::Vector3 ballPos = colliders[0]->getPosition();
+            DrawLine3D({ballPos.x, ballPos.y, ballPos.z}, {ballPos.x + -mouseDelta.x * mouseMult, ballPos.y, ballPos.z + -mouseDelta.y * mouseMult}, YELLOW);
+        }
+
         EndBlendMode();
         EndMode3D();
 
         DrawFPS(GetScreenWidth() - 128, 16);
+
+        if (isDragging) {
+            /*DrawLine(mouseStart.x, mouseStart.y, GetMousePosition().x, GetMousePosition().y, RED);
+            if (rotation != 0) DrawLine(mouseStart.x, mouseStart.y, mouseStart.x + rotation * 10, mouseStart.y, GREEN);*/
+            DrawSplineBasis() //fill this in with points?
+        }
 
         rlImGuiBegin();
         ImGui::Begin("Boxes");
