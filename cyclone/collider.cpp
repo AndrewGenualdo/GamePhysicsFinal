@@ -114,24 +114,29 @@ namespace cyclone {
         this->setType(ColliderType::Box);
     }
 
-    bool IntersectionTests::SphereSphere(const SphereCollider &a, const SphereCollider &b) {
-        return (a.getPosition() - b.getPosition()).squareMagnitude() < (a.getRadius() + b.getRadius()) * (a.getRadius() + b.getRadius());
+    bool IntersectionTests::SphereSphere(const Collider &a, const Collider &b) {
+        const real aRadius = reinterpret_cast<const SphereCollider &>(a).getRadius();
+        const real bRadius = reinterpret_cast<const SphereCollider &>(b).getRadius();
+        return (a.getPosition() - b.getPosition()).squareMagnitude() < (aRadius + bRadius) * (aRadius + bRadius);
     }
 
-    bool IntersectionTests::SpherePlane(const SphereCollider &a, const PlaneCollider &b) {
-        //return a.getRadius() > b.getNormal() * *a.getRigidbody()->getPosition() - b.getOffset();
-        //return a.getRadius() > abs(b.getNormal() * (*a.getRigidbody()->getPosition() - (b.getAxis(0) * b.getOffset())));
-        return std::abs(b.getNormal() * a.getPosition() - b.getOffset()) <= a.getRadius();
+    bool IntersectionTests::SpherePlane(const Collider &a, const Collider &b) {
+        const SphereCollider &sphere = reinterpret_cast<const SphereCollider &>(a);
+        const PlaneCollider &plane = reinterpret_cast<const PlaneCollider &>(b);
+        return std::abs(plane.getNormal() * a.getPosition() - plane.getOffset()) <= sphere.getRadius();
     }
 
-    bool IntersectionTests::SphereBox(const SphereCollider &a, const BoxCollider &b) {
+    bool IntersectionTests::SphereBox(const Collider &a, const Collider &b) {
+        const SphereCollider &sphere = reinterpret_cast<const SphereCollider &>(a);
+        const BoxCollider &box = reinterpret_cast<const BoxCollider &>(b);
+
         const Vector3 p = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
-        const Vector3 nearest = p.clamp(-b.getHalfSize(), b.getHalfSize());
+        const Vector3 nearest = p.clamp(-box.getHalfSize() * 0.5f, box.getHalfSize() * 0.5f);
         const real d = (nearest - p).squareMagnitude();
-        return d <= a.getRadius() * a.getRadius();
+        return d <= sphere.getRadius() * sphere.getRadius();
     }
 
-    bool IntersectionTests::PlanePlane(const PlaneCollider &a, const PlaneCollider &b) {
+    bool IntersectionTests::PlanePlane(const Collider &a, const Collider &b) {
         return false;
     }
 
@@ -142,9 +147,11 @@ namespace cyclone {
         return dx + dy + dz;
     }
 
-    bool IntersectionTests::PlaneBox(const PlaneCollider &a, const BoxCollider &b) {
-        return sizeAlongAxis(b, a.getNormal()) > a.getNormal() * *b.getRigidbody()->getPosition() - (a.getOffset());
-        return false;
+    bool IntersectionTests::PlaneBox(const Collider &a, const Collider &b) {
+        const PlaneCollider &plane = reinterpret_cast<const PlaneCollider &>(a);
+        const BoxCollider &box = reinterpret_cast<const BoxCollider &>(b);
+        return sizeAlongAxis(box, plane.getNormal()) > plane.getNormal() * *box.getRigidbody()->getPosition() - (plane.getOffset());
+        //return false;
 
     }
 
@@ -156,24 +163,26 @@ namespace cyclone {
             return distance <= aProject + bProject;
     }
 
-    bool IntersectionTests::BoxBox(const BoxCollider &a, const BoxCollider &b) {
+    bool IntersectionTests::BoxBox(const Collider &a, const Collider &b) {
+        const BoxCollider &af = reinterpret_cast<const BoxCollider &>(a);
+        const BoxCollider &bf = reinterpret_cast<const BoxCollider &>(b);
         const Vector3 toCenter = a.getAxis(3) - b.getAxis(3);
-        #define TEST_OVERLAP(axis) overlapOnAxis(a, b, (axis), toCenter)
-        return TEST_OVERLAP(a.getAxis(0)) && // a's face normals
-               TEST_OVERLAP(a.getAxis(1)) &&
-               TEST_OVERLAP(a.getAxis(2)) &&
-               TEST_OVERLAP(b.getAxis(0)) && // b's face noramls
-               TEST_OVERLAP(b.getAxis(1)) &&
-               TEST_OVERLAP(b.getAxis(2)) &&
-               TEST_OVERLAP(a.getAxis(0) % b.getAxis(0)) && // cross products between edges - 3 unique edge directions per cube (so nine tests)
-               TEST_OVERLAP(a.getAxis(0) % b.getAxis(1)) &&
-               TEST_OVERLAP(a.getAxis(0) % b.getAxis(2)) &&
-               TEST_OVERLAP(a.getAxis(1) % b.getAxis(0)) &&
-               TEST_OVERLAP(a.getAxis(1) % b.getAxis(1)) &&
-               TEST_OVERLAP(a.getAxis(1) % b.getAxis(2)) &&
-               TEST_OVERLAP(a.getAxis(2) % b.getAxis(0)) &&
-               TEST_OVERLAP(a.getAxis(2) % b.getAxis(1)) &&
-               TEST_OVERLAP(a.getAxis(2) % b.getAxis(2));
+        #define TEST_OVERLAP(axis) overlapOnAxis(af, bf, (axis), toCenter)
+        return TEST_OVERLAP(af.getAxis(0)) && // a's face normals
+               TEST_OVERLAP(af.getAxis(1)) &&
+               TEST_OVERLAP(af.getAxis(2)) &&
+               TEST_OVERLAP(bf.getAxis(0)) && // b's face noramls
+               TEST_OVERLAP(bf.getAxis(1)) &&
+               TEST_OVERLAP(bf.getAxis(2)) &&
+               TEST_OVERLAP(af.getAxis(0) % bf.getAxis(0)) && // cross products between edges - 3 unique edge directions per cube (so nine tests)
+               TEST_OVERLAP(af.getAxis(0) % bf.getAxis(1)) &&
+               TEST_OVERLAP(af.getAxis(0) % bf.getAxis(2)) &&
+               TEST_OVERLAP(af.getAxis(1) % bf.getAxis(0)) &&
+               TEST_OVERLAP(af.getAxis(1) % bf.getAxis(1)) &&
+               TEST_OVERLAP(af.getAxis(1) % bf.getAxis(2)) &&
+               TEST_OVERLAP(af.getAxis(2) % bf.getAxis(0)) &&
+               TEST_OVERLAP(af.getAxis(2) % bf.getAxis(1)) &&
+               TEST_OVERLAP(af.getAxis(2) % bf.getAxis(2));
     }
 
     Contact::Contact() {
@@ -206,13 +215,15 @@ namespace cyclone {
         }
     }
 
-    int CollisionTests::SphereSphere(const SphereCollider &a, const SphereCollider &b, CollisionData *data) {
+    int CollisionTests::SphereSphere(const Collider &a, const Collider &b, CollisionData *data) {
+        const SphereCollider &af = reinterpret_cast<const SphereCollider &>(a);
+        const SphereCollider &bf = reinterpret_cast<const SphereCollider &>(b);
 
         Contact *contact = new Contact();
         contact->body[0] = a.getRigidbody();
         contact->body[1] = b.getRigidbody();
         const real distance = (a.getPosition() - b.getPosition()).magnitude();
-        contact->penetration = distance - (a.getRadius() + b.getRadius());
+        contact->penetration = distance - (af.getRadius() + bf.getRadius());
         contact->point = a.getPosition() + (b.getPosition() - a.getPosition()) * 0.5f;
         contact->normal = (b.getPosition() - a.getPosition());
         contact->normal.normalise();
@@ -220,11 +231,14 @@ namespace cyclone {
         return 1;
     }
 
-    int CollisionTests::SphereTruePlane(const SphereCollider &sphere, const PlaneCollider &plane, CollisionData *data) {
+    int CollisionTests::SphereTruePlane(const Collider &a, const Collider &b, CollisionData *data) {
+        const SphereCollider &sphere = reinterpret_cast<const SphereCollider &>(a);
+        const PlaneCollider &plane = reinterpret_cast<const PlaneCollider &>(b);
+
         Contact *contact = new Contact();
-        contact->body[0] = sphere.getRigidbody();
-        contact->body[1] = plane.getRigidbody();
-        const real distance = (plane.getNormal() * (sphere.getPosition() - plane.getPosition())) - sphere.getRadius();
+        contact->body[0] = a.getRigidbody();
+        contact->body[1] = b.getRigidbody();
+        const real distance = (plane.getNormal() * (a.getPosition() - b.getPosition())) - sphere.getRadius();
         Vector3 normal = plane.getNormal();
         real penetration = -distance;
         if (distance > 0) {
@@ -233,24 +247,28 @@ namespace cyclone {
         }
         contact->normal = normal;
         contact->penetration = penetration;
-        contact->point = sphere.getPosition() - normal * sphere.getRadius();
+        contact->point = a.getPosition() - normal * sphere.getRadius();
         data->addContacts(contact);
         return 1;
     }
 
-    int CollisionTests::SphereBox(const SphereCollider &sphere, const BoxCollider &box, CollisionData *data) {
+    int CollisionTests::SphereBox(const Collider &a, const Collider &b, CollisionData *data) {
+        const SphereCollider &sphere = reinterpret_cast<const SphereCollider &>(a);
+        const BoxCollider &box = reinterpret_cast<const BoxCollider &>(b);
+
+
         //sphere center -> box local space
-        const Vector3 relCenter = box.getRigidbody()->getTransformMatrix()->transformInverse(*sphere.getRigidbody()->getPosition());
+        const Vector3 relCenter = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
 
         //gets point box closest to sphere center
-        const Vector3 closestPoint = relCenter.clamp(-box.getHalfSize(), box.getHalfSize());
+        const Vector3 closestPoint = relCenter.clamp(-box.getHalfSize() * 0.5f, box.getHalfSize() * 0.5f);
 
         //vector from closest point to sphere center
         const Vector3 localDelta = relCenter - closestPoint;
 
         Contact *contact = new Contact();
-        contact->body[0] = sphere.getRigidbody();
-        contact->body[1] = box.getRigidbody();
+        contact->body[0] = a.getRigidbody();
+        contact->body[1] = b.getRigidbody();
 
         Vector3 normal;
         real distance = localDelta.magnitude();
@@ -258,12 +276,12 @@ namespace cyclone {
         //if sphere center is inside box or not
         if (distance > 0.0001f) { //not in box
             //normal to world space
-            normal = box.getRigidbody()->getTransformMatrix()->transformDirection(localDelta * (1.0f / distance));
+            normal = b.getRigidbody()->getTransformMatrix()->transformDirection(localDelta * (1.0f / distance));
             normal.normalise();
 
         } else { //in box
-            const Vector3 boxCenter = *box.getRigidbody()->getPosition();
-            normal = (*sphere.getRigidbody()->getPosition() - boxCenter);
+            const Vector3 boxCenter = *b.getRigidbody()->getPosition();
+            normal = (*a.getRigidbody()->getPosition() - boxCenter);
             if (normal.squareMagnitude() < 0.0001f)
                 normal = Vector3(1, 0, 0); //arbitrary default direction
             normal.normalise();
@@ -272,7 +290,7 @@ namespace cyclone {
 
         //contact point in world space
         //closest point transformed to world space + normal scaled by penetration
-        contact->point = box.getRigidbody()->getTransformMatrix()->transform(closestPoint);;
+        contact->point = b.getRigidbody()->getTransformMatrix()->transform(closestPoint);;
         contact->normal = normal;
         contact->penetration = sphere.getRadius() - distance;
 

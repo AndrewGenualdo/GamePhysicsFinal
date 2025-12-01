@@ -134,7 +134,8 @@ void cyclone::Rigidbody::addForceAtPoint(const Vector3 &force, const Vector3 &po
 }
 
 void cyclone::Rigidbody::setMass(const real mass) {
-    setInverseMass(1 / mass);
+    if (mass != 0) setInverseMass(1 / mass);
+    else setInverseMass(0);
 }
 
 void cyclone::Rigidbody::setInertiaTensor(const Matrix3 &inertiaTensor) {
