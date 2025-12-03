@@ -252,7 +252,14 @@ int main() {
         if (isDragging) {
             /*DrawLine(mouseStart.x, mouseStart.y, GetMousePosition().x, GetMousePosition().y, RED);
             if (rotation != 0) DrawLine(mouseStart.x, mouseStart.y, mouseStart.x + rotation * 10, mouseStart.y, GREEN);*/
-            DrawSplineBasis() //fill this in with points?
+            Vector2 midPoint = (GetMousePosition() + mouseStart) * 0.5f;
+            midPoint.x += rotation * 10;
+            Vector2 *points = new Vector2[3];//{mouseStart, midPoint, GetMousePosition()};
+            points[0] = mouseStart;
+            points[1] = midPoint;
+            points[2] = GetMousePosition();
+            DrawSplineBezierQuadratic(points, 3, 5, GREEN); //fill this in with points?
+            delete [] points;
         }
 
         rlImGuiBegin();

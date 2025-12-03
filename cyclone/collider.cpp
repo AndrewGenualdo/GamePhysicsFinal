@@ -285,7 +285,7 @@ namespace cyclone {
 
         } else { //in box
             const Vector3 boxCenter = *b.getRigidbody()->getPosition();
-            normal = (*a.getRigidbody()->getPosition() - boxCenter);
+            normal = *a.getRigidbody()->getPosition() - boxCenter;
             if (normal.squareMagnitude() < 0.0001f)
                 normal = Vector3(1, 0, 0); //arbitrary default direction
             normal.normalise();
