@@ -280,8 +280,9 @@ namespace cyclone {
         //if sphere center is inside box or not
         if (distance > 0.0001f) { //not in box
             //normal to world space
-            normal = b.getRigidbody()->getTransformMatrix()->transformDirection(localDelta * (1.0f / distance));
+            normal = b.getRigidbody()->getTransformMatrix()->transformDirection(localDelta.unit());
             normal.normalise();
+
 
         } else { //in box
             const Vector3 boxCenter = *b.getRigidbody()->getPosition();
