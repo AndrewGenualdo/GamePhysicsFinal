@@ -322,6 +322,16 @@ namespace cyclone {
         const Vector3 deltaB = -j * *contact->body[1]->getInverseMass();
         contact->body[0]->addImpulse(deltaA);
         contact->body[1]->addImpulse(deltaB);
+
+        const real elasticity = 1.0f; //value from 0 to 1
+        const real numerator = (-relVel * (1 + elasticity)).scalarProduct(contact->normal);
+
+        Vector3 offsetA = contact->point - *contact->body[0]->getPosition();
+        Vector3 offsetB = contact->point - *contact->body[1]->getPosition();
+
+        real denominator = contact->normal.scalarProduct(contact->normal * (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()));
+        denominator += ((*contact->body[0]->getInverseInertiaTensor() * offsetA.vectorProduct(contact->normal)).vectorProduct(offsetA) + (*contact->body[1]->getInverseInertiaTensor() * offsetB.vectorProduct(contact->normal)).vectorProduct(offsetB)).scalarProduct(contact->normal);
+        const real J = numerator / denominator;
     }
 
     void ContactResolver::resolveInterpenetration(const Contact *contact) {
