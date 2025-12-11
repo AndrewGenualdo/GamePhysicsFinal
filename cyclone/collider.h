@@ -111,6 +111,7 @@ namespace cyclone {
         static int SphereSphere(const Collider& a, const Collider& b, CollisionData* data);
         static int SphereTruePlane(const Collider& a, const Collider& b, CollisionData* data);
         static int SphereBox(const Collider& a, const Collider& b, CollisionData* data);
+        static int BoxBox(const Collider& a, const Collider& b, CollisionData *data);
     };
 
     class ContactResolver{

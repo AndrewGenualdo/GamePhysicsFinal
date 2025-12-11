@@ -54,6 +54,7 @@ int main() {
     std::vector<cyclone::Collider*> colliders;
 
     bool reset = true;
+    bool resetBall = true;
     bool debug = false;
 
 
@@ -129,7 +130,11 @@ int main() {
 
         //handling bowling the ball
         float mouseMult = 0.1f;
-        if (ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f) {
+        if (std::abs(ball->getPosition().x) < 0.1f && std::abs(ball->getPosition().z) < 0.1f && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            resetBall = true;
+            ball->getRigidbody()->setVelocity(cyclone::Vector3(0,0,0));
+        }
+        if (ball->getRigidbody()->getVelocity()->squareMagnitude() < 1) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 mouseStart = GetMousePosition();
                 isDragging = true;
@@ -141,7 +146,7 @@ int main() {
                     Vector2 mouseDelta = mouseEnd - mouseStart;
                     ball->getRigidbody()->addVelocity(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
                     //ball->getRigidbody()->addTorque(cyclone::Vector3(rotation * 100 / deltaTime, rotation * 100 / deltaTime, rotation * 100 / deltaTime));
-                    ball->getRigidbody()->addTorque({0,0,rotation * 1000});
+                    ball->getRigidbody()->addTorque({0,0,rotation / deltaTime});
                     isDragging = false;
                 }
                 else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -158,10 +163,11 @@ int main() {
             reset = true;
         }
         //reset just the ball
-        else if (ball->getPosition().y < -1.1f || ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f) {
+        else if (resetBall || ball->getPosition().y < -1.1f || ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f || IsKeyDown(KEY_SPACE)) {
             ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
             ball->getRigidbody()->setVelocity(cyclone::Vector3(0, 0, 0));
             ball->getRigidbody()->setAngularVelocity(cyclone::Vector3(0, 0, 0));
+            resetBall = false;
         }
 
         for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
