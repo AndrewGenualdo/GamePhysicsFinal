@@ -4,6 +4,7 @@
 
 #include "collider.h"
 
+#include <algorithm>
 #include <iostream>
 
 
@@ -261,7 +262,7 @@ namespace cyclone {
         const BoxCollider &box = reinterpret_cast<const BoxCollider &>(b);
 
 
-        //sphere center -> box local space
+        //sphere center ->box local space
         const Vector3 relCenter = b.getRigidbody()->getTransformMatrix()->transformInverse(*a.getRigidbody()->getPosition());
 
         //gets point box closest to sphere center
@@ -313,31 +314,63 @@ namespace cyclone {
     }
 
     void ContactResolver::resolveVelocity(const Contact *contact, const real restitution) {
-        const Vector3 relVel = *contact->body[0]->getVelocity() - *contact->body[1]->getVelocity();
-        const real sepVel = relVel * contact->normal;
-        const real newSepVel = -restitution * sepVel;
-        const real deltaVel = newSepVel - sepVel;
-        const Vector3 j = contact->normal * (deltaVel / (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()));
-        const Vector3 deltaA = j * *contact->body[0]->getInverseMass();
-        const Vector3 deltaB = -j * *contact->body[1]->getInverseMass();
-        contact->body[0]->addImpulse(deltaA);
-        contact->body[1]->addImpulse(deltaB);
+        Vector3 rA = contact->point - *contact->body[0]->getPosition();
+        Vector3 rB = contact->point - *contact->body[1]->getPosition();
 
-        const real elasticity = 1.0f; //value from 0 to 1
-        const real numerator = (-relVel * (1 + elasticity)).scalarProduct(contact->normal);
+        Vector3 vA = *contact->body[0]->getVelocity() + (contact->body[0]->getAngularVelocity()->vectorProduct(rA));
+        Vector3 vB = *contact->body[1]->getVelocity() + (contact->body[1]->getAngularVelocity()->vectorProduct(rB));
 
-        Vector3 offsetA = contact->point - *contact->body[0]->getPosition();
-        Vector3 offsetB = contact->point - *contact->body[1]->getPosition();
+        Vector3 dv = vA - vB;
 
-        real denominator = contact->normal.scalarProduct(contact->normal * (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()));
-        denominator += ((*contact->body[0]->getInverseInertiaTensor() * offsetA.vectorProduct(contact->normal)).vectorProduct(offsetA) + (*contact->body[1]->getInverseInertiaTensor() * offsetB.vectorProduct(contact->normal)).vectorProduct(offsetB)).scalarProduct(contact->normal);
-        const real J = numerator / denominator;
-        Vector3 torqueA =  (*contact->body[0]->getInverseInertiaTensor()) * (offsetA.vectorProduct(contact->normal * J));
-        Vector3 torqueB =  (*contact->body[1]->getInverseInertiaTensor()) * (offsetB.vectorProduct(-contact->normal * J));
-        if(*contact->body[0]->getInverseMass() != 0)
-            contact->body[0]->addTorque(torqueA * 1000);
-        if(*contact->body[1]->getInverseMass() != 0)
-        contact->body[1]->addTorque(torqueB * 1000);
+        real massComponent = (  *contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()) +
+                                contact->normal.scalarProduct((*contact->body[0]->getInverseInertiaTensor() * (rA.vectorProduct(contact->normal))).vectorProduct(rA)) +
+                                contact->normal.scalarProduct((*contact->body[1]->getInverseInertiaTensor() * (rB.vectorProduct(contact->normal))).vectorProduct(rB));
+        if(massComponent > 0)
+        {
+
+            real J = std::max(-dv.scalarProduct(contact->normal) / massComponent, 0.0f);
+
+            if(*contact->body[0]->getInverseMass() > 0)
+            {
+                contact->body[0]->addVelocity(-(contact->normal * (J * (*contact->body[0]->getInverseMass()))));
+                contact->body[0]->addRotation(-(*contact->body[0]->getInverseInertiaTensor() * (rA.vectorProduct(contact->normal * J))));
+            }
+            if(*contact->body[1]->getInverseMass() > 0)
+            {
+                contact->body[1]->addVelocity((contact->normal * (J * (*contact->body[1]->getInverseMass()))));
+                contact->body[1]->addRotation((*contact->body[1]->getInverseInertiaTensor() * (rB.vectorProduct(contact->normal * J))));
+            }
+        }
+
+        Vector3 tangent = dv - contact->normal * (dv.scalarProduct(contact->normal));
+        real tangentMag = tangent.magnitude();
+        if(tangentMag > 0.0001f)
+        {
+            tangent.normalise();
+            //float frictionalMass = ( pnodeA->GetInverseMass () + pnodeB->GetInverseMass()) +Vector3::Dot(tangent, Vector3::Cross(pnodeA->GetInverseInertia() * Vector3::Cross(r1, tangent), r1) + Vector3::Cross(pnodeB->GetInverseInertia() * Vector3::Cross(r2, tangent), r2));
+            real frictionalMass = (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()) +
+                tangent.scalarProduct((*contact->body[0]->getInverseInertiaTensor() * (rA.vectorProduct(tangent))).vectorProduct(rA)) +
+                    tangent.scalarProduct((*contact->body[1]->getInverseInertiaTensor() * (rB.vectorProduct(tangent))).vectorProduct(rB));
+            if(frictionalMass > 0)
+            {
+                real frictionCoeff = 1.0f; //hardcoded for now
+                real Jt = -dv.scalarProduct(tangent) * frictionCoeff / frictionalMass;
+                if(*contact->body[0]->getInverseMass() > 0)
+                {
+                    contact->body[0]->addVelocity(-(tangent * (Jt * (*contact->body[0]->getInverseMass()))));
+                    contact->body[0]->addRotation(-(*contact->body[0]->getInverseInertiaTensor() * (rA.vectorProduct(tangent * Jt))));
+                }
+                if(*contact->body[1]->getInverseMass() > 0)
+                {
+                    contact->body[1]->addVelocity(tangent * (Jt * (*contact->body[1]->getInverseMass())));
+                    contact->body[1]->addRotation((*contact->body[1]->getInverseInertiaTensor() * (rB.vectorProduct(tangent * Jt))));
+                }
+            }
+        }
+
+
+
+
     }
 
     void ContactResolver::resolveInterpenetration(const Contact *contact) {

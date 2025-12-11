@@ -54,12 +54,13 @@ namespace cyclone {
         void setInverseInertiaTensorWorld(const Matrix3 &inverseInertiaTensorWorld);
 
         void integrate(real deltaTime);
-        void addImpulse(const Vector3 &impulse);
+        void addVelocity(const Vector3 &impulse);
         void addForce(const Vector3& force);
         void addTorque(const Vector3& torque);
         void addForceAtPoint(const Vector3& force, const Vector3& point);
         void setMass(real mass);
         void setInertiaTensor(const Matrix3 &inertiaTensor);
+        void addRotation(Vector3 vector3);
 
     private:
         //clears forceAccum and torqueAccum

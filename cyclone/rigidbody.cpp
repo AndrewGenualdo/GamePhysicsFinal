@@ -104,7 +104,7 @@ void cyclone::Rigidbody::integrate(const real deltaTime) {
     velocity *= pow(linearDamping, deltaTime);
     position.addScaledVector(velocity, deltaTime);
 
-    const Vector3 angularAcceleration = inverseInertiaTensorWorld.transform(torqueAccum);
+    const Vector3 angularAcceleration = inverseInertiaTensorWorld.transform(torqueAccum * inverseMass);
     angularVelocity += angularAcceleration * deltaTime;
     angularVelocity *= pow(angularDamping, deltaTime);
     orientation.addScaledVector(angularVelocity, deltaTime);
@@ -113,7 +113,7 @@ void cyclone::Rigidbody::integrate(const real deltaTime) {
 
 }
 
-void cyclone::Rigidbody::addImpulse(const Vector3 &impulse) {
+void cyclone::Rigidbody::addVelocity(const Vector3 &impulse) {
     velocity += impulse;
 }
 
@@ -140,6 +140,17 @@ void cyclone::Rigidbody::setMass(const real mass) {
 
 void cyclone::Rigidbody::setInertiaTensor(const Matrix3 &inertiaTensor) {
     inverseInertiaTensor.setInverse(inertiaTensor);
+}
+
+cyclone::real cyclone::Rigidbody::getMass()
+{
+    if (inverseMass == 0) return 0;
+    return 1 / inverseMass;
+}
+
+void cyclone::Rigidbody::addRotation(Vector3 vector3)
+{
+    angularVelocity += vector3;
 }
 
 void cyclone::Rigidbody::clearAccumulators() {
@@ -182,7 +193,7 @@ cyclone::Rigidbody::Rigidbody()  {
     inverseInertiaTensor.data[0] = 1;
     inverseInertiaTensor.data[4] = 1;
     inverseInertiaTensor.data[8] = 1;
-    calculateDerivedData();
     inverseInertiaTensorWorld = Matrix3();
+    calculateDerivedData();
     transformMatrix = Matrix4();
 }
