@@ -47,37 +47,17 @@ int main() {
 
     float restitution = 0.75f;
 
-    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 25, 25));
+    Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 10, 10));
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
     Model planeModel = LoadModelFromMesh(GenMeshPlane(10, 10, 10, 10));
 
     std::vector<cyclone::Collider*> colliders;
-    //bowling ball
-    auto ball = new cyclone::SphereCollider();
-    ball->setRadius(0.3541666666666667f);
-    ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
-    ball->getRigidbody()->setInverseMass(1.0f / 7.26f);
-    ball->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
-    colliders.push_back(ball);
 
-#define addBoxCollider(pos, scale, invMass) {auto newBox = new cyclone::BoxCollider(); newBox->getRigidbody()->setPosition(pos); newBox->setHalfSize(scale); newBox->getRigidbody()->setInverseMass(invMass); if(invMass != 0) newBox->getRigidbody()->setAcceleration(cyclone::Vector3(0, 0, 0)); colliders.push_back(newBox);}
+    bool reset = true;
+    bool debug = false;
 
-    addBoxCollider(cyclone::Vector3(0, 0, -29), cyclone::Vector3(3.5, 1, 60), 0);
-    addBoxCollider(cyclone::Vector3(0, -0.55, -29), cyclone::Vector3(5.6, 0.1, 60), 0);
-    addBoxCollider(cyclone::Vector3(2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
-    addBoxCollider(cyclone::Vector3(-2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
-    addBoxCollider(cyclone::Vector3(-1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(-1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(0, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(-0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
-    addBoxCollider(cyclone::Vector3(0, 1.125, -56.1354), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
 
-    camera.target = {colliders[colliders.size() - 1]->getPosition().x, colliders[colliders.size() - 1]->getPosition().y, colliders[colliders.size() - 1]->getPosition().z};
+
 
     auto *data = new cyclone::CollisionData();
     data->reset();
@@ -96,65 +76,97 @@ int main() {
     bool isDragging = false;
     while (!WindowShouldClose()) {
 
+        //reset the scene
+        if (reset) {
+            for (auto & collider : colliders) delete collider;
+            colliders.clear();
+            //bowling ball
+            auto ball = new cyclone::SphereCollider();
+            ball->setRadius(0.3541666666666667f);
+            ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
+            ball->getRigidbody()->setInverseMass(1.0f / 7.26f);
+            ball->getRigidbody()->setAcceleration(cyclone::Vector3(0, -10, 0));
+            ball->getRigidbody()->setLinearDamping(0.95f);
+            ball->getRigidbody()->setAngularDamping(0.95f);
+            colliders.push_back(ball);
+
+            #define addBoxCollider(pos, scale, invMass) {auto newBox = new cyclone::BoxCollider(); newBox->getRigidbody()->setPosition(pos); newBox->setHalfSize(scale); newBox->getRigidbody()->setInverseMass(invMass); if(invMass != 0) newBox->getRigidbody()->setAcceleration(cyclone::Vector3(0, 0, 0)); colliders.push_back(newBox);}
+
+            //all the box colliders for the world
+            addBoxCollider(cyclone::Vector3(0, 0, -29), cyclone::Vector3(3.5, 1, 60), 0);
+            addBoxCollider(cyclone::Vector3(0, -0.55, -29), cyclone::Vector3(5.6, 0.1, 60), 0);
+            addBoxCollider(cyclone::Vector3(2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
+            addBoxCollider(cyclone::Vector3(-2.75, 0, -29), cyclone::Vector3(0.1, 1, 60), 0);
+            addBoxCollider(cyclone::Vector3(-1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(-0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(0.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(1.5, 1.125, -58.7292), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(-1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(0, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(1, 1.125, -57.8646), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(-0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(0.5, 1.125, -57), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+            addBoxCollider(cyclone::Vector3(0, 1.125, -56.1354), cyclone::Vector3(0.395833, 1.25, 0.395833), 1.0f / 1.64f);
+
+            camera.target = {colliders[colliders.size() - 1]->getPosition().x, colliders[colliders.size() - 1]->getPosition().y, colliders[colliders.size() - 1]->getPosition().z};
+            reset = false;
+        }
+
+        cyclone::SphereCollider *ball = reinterpret_cast<cyclone::SphereCollider *>(colliders[0]);
+
 
         float deltaTime = GetFrameTime();
-        //Input
-        /*if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-            DisableCursor();
-        }
-        if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON)) {
-            EnableCursor();
-        }
-        //Only allow movement if the cursor is hidden
-        if (IsCursorHidden()) {
-            ew::UpdateFlyCamera(&camera, deltaTime);
-        }*/
-        float mouseMult = 0.1f;
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            mouseStart = GetMousePosition();
-            isDragging = true;
-            rotation = 0;
-        }
-        if (isDragging) {
-            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-                Vector2 mouseEnd = GetMousePosition();
-                Vector2 mouseDelta = mouseEnd - mouseStart;
-                colliders[0]->getRigidbody()->addImpulse(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
-                isDragging = false;
-            }
-            else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-                isDragging = false;
-            } else rotation += GetMouseWheelMove();
-        }
 
+        //toggle debug mode
+        if (IsKeyPressed(KEY_F3)) debug = !debug;
 
-
+        //camera zoom in for dramatic effect
         if (ball->getPosition().z < -30) {
             camera.position = {-10.0f, 7.0f, -35.0f };
         } else {
             camera.position = {-10.0f, 7.0f, 15.0f };
         }
 
-        if (IsKeyPressed(KEY_P)) {
-            std::cout << std::endl;
-
-            for (int i = 0; i < colliders.size(); i++) {
-                if (colliders[i]->getType() == cyclone::ColliderType::Box) {
-                    std::cout << "addBoxCollider(cyclone::Vector3(" << colliders[i]->getRigidbody()->getPosition()->x << ", " << colliders[i]->getRigidbody()->getPosition()->y << ", " << colliders[i]->getRigidbody()->getPosition()->z << "), ";
-                    cyclone::BoxCollider *box = reinterpret_cast<cyclone::BoxCollider *>(colliders[i]);
-                    std::cout << "cyclone::Vector3(" << box->getHalfSize().x << ", " << box->getHalfSize().y << ", " << box->getHalfSize().z << "), " << std::to_string(*colliders[i]->getRigidbody()->getInverseMass()) << ");" << std::endl;
-                }
+        //handling bowling the ball
+        float mouseMult = 0.1f;
+        if (ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                mouseStart = GetMousePosition();
+                isDragging = true;
+                rotation = 0;
             }
-
-            std::cout << std::endl;
+            if (isDragging) {
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+                    Vector2 mouseEnd = GetMousePosition();
+                    Vector2 mouseDelta = mouseEnd - mouseStart;
+                    ball->getRigidbody()->addImpulse(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
+                    //ball->getRigidbody()->addTorque(cyclone::Vector3(rotation * 100 / deltaTime, rotation * 100 / deltaTime, rotation * 100 / deltaTime));
+                    ball->getRigidbody()->setAngularVelocity(cyclone::Vector3(0, 0, rotation));
+                    isDragging = false;
+                }
+                else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+                    isDragging = false;
+                } else rotation += GetMouseWheelMove(); //scroll wheel to adjust how much the ball should spin
+            }
         }
+
+
+
+
+        //reset game
         if (IsKeyPressed(KEY_R)) {
+            reset = true;
+        }
+        //reset just the ball
+        else if (ball->getPosition().y < -1.1f || ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f) {
             ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
             ball->getRigidbody()->setVelocity(cyclone::Vector3(0, 0, 0));
+            ball->getRigidbody()->setAngularVelocity(cyclone::Vector3(0, 0, 0));
         }
 
         for (auto & collider : colliders) collider->getRigidbody()->integrate(deltaTime);
 
+        //collisions
         for (int i = 0; i < colliders.size(); i++) {
             for (int j = i + 1; j < colliders.size(); j++) {
                 bool swap = static_cast<int>(colliders[i]->getType()) > static_cast<int>(colliders[j]->getType());
@@ -188,6 +200,7 @@ int main() {
 
         for (auto collider : colliders) collider->updateInternals();
 
+        //draw colliders
         for(int i = 0; i < colliders.size(); i++) {
 
                 cyclone::Collider* collider = colliders[i];
@@ -209,7 +222,7 @@ int main() {
                         const cyclone::SphereCollider &sphere = reinterpret_cast<const cyclone::SphereCollider &>(*collider);
                         sphereModel.transform = MatrixScale(sphere.getRadius(), sphere.getRadius(), sphere.getRadius()) * ew::CTR(*collider->getRigidbody()->getTransformMatrix());
                         DrawModel(sphereModel, {0,0,0}, 1, color);
-                        //DrawModelWires(sphereModel, {0,0,0}, 1.0f, BLACK);
+                        DrawModelWires(sphereModel, {0,0,0}, 1.0f, BLACK);
                         break;
                     }
                     case cyclone::ColliderType::Box: {
@@ -237,6 +250,7 @@ int main() {
                 }
             }
 
+        //line-up visual (3D)
         if (isDragging) {
             Vector2 mouseEnd = GetMousePosition();
             Vector2 mouseDelta = mouseEnd - mouseStart;
@@ -249,9 +263,8 @@ int main() {
 
         DrawFPS(GetScreenWidth() - 128, 16);
 
+        //line-up visual (2D)
         if (isDragging) {
-            /*DrawLine(mouseStart.x, mouseStart.y, GetMousePosition().x, GetMousePosition().y, RED);
-            if (rotation != 0) DrawLine(mouseStart.x, mouseStart.y, mouseStart.x + rotation * 10, mouseStart.y, GREEN);*/
             Vector2 midPoint = (GetMousePosition() + mouseStart) * 0.5f;
             midPoint.x += rotation * 10;
             Vector2 *points = new Vector2[3];//{mouseStart, midPoint, GetMousePosition()};
@@ -262,25 +275,42 @@ int main() {
             delete [] points;
         }
 
-        rlImGuiBegin();
-        ImGui::Begin("Boxes");
-        ImGui::DragFloat("Restitution", &restitution,0.01f);
-        if (ImGui::Button("Create Box")) {
-            addBoxCollider(cyclone::Vector3(0,0,0), cyclone::Vector3(1,1,1), 0);
-        }
-        for (int i = 0; i < colliders.size(); i++) {
-            if (colliders[i]->getType() == cyclone::ColliderType::Box) {
-                //ImGui::DragFloat3("Position [" + std::to_string(i) + "]"), colliders[i]->getPosition().x, 0.01f);
-                float pos[] = {colliders[i]->getPosition().x, colliders[i]->getPosition().y, colliders[i]->getPosition().z};
-                if (ImGui::DragFloat3(("Pos ["+std::to_string(i)+"]").c_str(), pos, 0.01f)) colliders[i]->getRigidbody()->setPosition(cyclone::Vector3(pos[0], pos[1], pos[2]));
-                cyclone::BoxCollider *box = reinterpret_cast<cyclone::BoxCollider *>(colliders[i]);
-                float scale[] = {box->getHalfSize().x, box->getHalfSize().y, box->getHalfSize().z};
-                if (ImGui::DragFloat3(("Scale ["+std::to_string(i)+"]").c_str(), scale, 0.01f)) box->setHalfSize(cyclone::Vector3(scale[0], scale[1], scale[2]));
+        //debug functions for creating the game
+        if (debug) {
+            //ImGui for creating boxes (to then print)
+            rlImGuiBegin();
+            ImGui::Begin("Boxes");
+            ImGui::DragFloat("Restitution", &restitution,0.01f);
+            if (ImGui::Button("Create Box")) {
+                addBoxCollider(cyclone::Vector3(0,0,0), cyclone::Vector3(1,1,1), 0);
+            }
+            for (int i = 0; i < colliders.size(); i++) {
+                if (colliders[i]->getType() == cyclone::ColliderType::Box) {
+                    float pos[] = {colliders[i]->getPosition().x, colliders[i]->getPosition().y, colliders[i]->getPosition().z};
+                    if (ImGui::DragFloat3(("Pos ["+std::to_string(i)+"]").c_str(), pos, 0.01f)) colliders[i]->getRigidbody()->setPosition(cyclone::Vector3(pos[0], pos[1], pos[2]));
+                    cyclone::BoxCollider *box = reinterpret_cast<cyclone::BoxCollider *>(colliders[i]);
+                    float scale[] = {box->getHalfSize().x, box->getHalfSize().y, box->getHalfSize().z};
+                    if (ImGui::DragFloat3(("Scale ["+std::to_string(i)+"]").c_str(), scale, 0.01f)) box->setHalfSize(cyclone::Vector3(scale[0], scale[1], scale[2]));
+                }
+            }
+            ImGui::End();
+            rlImGuiEnd();
+
+            //code creation for making box colliders
+            if (IsKeyPressed(KEY_P)) {
+                std::cout << std::endl;
+
+                for (int i = 0; i < colliders.size(); i++) {
+                    if (colliders[i]->getType() == cyclone::ColliderType::Box) {
+                        std::cout << "addBoxCollider(cyclone::Vector3(" << colliders[i]->getRigidbody()->getPosition()->x << ", " << colliders[i]->getRigidbody()->getPosition()->y << ", " << colliders[i]->getRigidbody()->getPosition()->z << "), ";
+                        cyclone::BoxCollider *box = reinterpret_cast<cyclone::BoxCollider *>(colliders[i]);
+                        std::cout << "cyclone::Vector3(" << box->getHalfSize().x << ", " << box->getHalfSize().y << ", " << box->getHalfSize().z << "), " << std::to_string(*colliders[i]->getRigidbody()->getInverseMass()) << ");" << std::endl;
+                    }
+                }
+
+                std::cout << std::endl;
             }
         }
-        ImGui::End();
-        rlImGuiEnd();
-
         EndDrawing();
     }
     delete data;
