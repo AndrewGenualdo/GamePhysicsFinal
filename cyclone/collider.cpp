@@ -320,7 +320,7 @@ namespace cyclone {
         Vector3 vA = *contact->body[0]->getVelocity() + (contact->body[0]->getAngularVelocity()->vectorProduct(rA));
         Vector3 vB = *contact->body[1]->getVelocity() + (contact->body[1]->getAngularVelocity()->vectorProduct(rB));
 
-        Vector3 dv = vA - vB;
+        Vector3 dv = vB - vA;
 
         real massComponent = (  *contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()) +
                                 contact->normal.scalarProduct((*contact->body[0]->getInverseInertiaTensor() * (rA.vectorProduct(contact->normal))).vectorProduct(rA)) +
