@@ -45,7 +45,7 @@ int main() {
     float roomSize = 10;
     float octreeMinSize = 0.5f * roomSize * 0.2f;*/
 
-    float restitution = 1.f;
+    float restitution = 0.75f;
 
     Model sphereModel = LoadModelFromMesh(GenMeshSphere(1, 10, 10));
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1, 1, 1));
@@ -141,12 +141,7 @@ int main() {
                 rotation = 0;
             }
             if (isDragging) {
-
-                ball->getRigidbody()->setPosition({0,2,0}); //hold ball in place while aiming
-                ball->getRigidbody()->setAcceleration({0,0,0}); //disable gravity while aiming
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-                    ball->getRigidbody()->setAcceleration({0,-10,0}); //disable gravity while aiming
-
                     Vector2 mouseEnd = GetMousePosition();
                     Vector2 mouseDelta = mouseEnd - mouseStart;
                     ball->getRigidbody()->addVelocity(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
@@ -169,7 +164,7 @@ int main() {
         }
         //reset just the ball
         else if (resetBall || ball->getPosition().y < -1.1f || ball->getRigidbody()->getVelocity()->squareMagnitude() < 0.01f || IsKeyDown(KEY_SPACE)) {
-            ball->getRigidbody()->setPosition(cyclone::Vector3(0, 2.0f + ball->getRadius(), 0));
+            ball->getRigidbody()->setPosition(cyclone::Vector3(0, 0.5f + ball->getRadius(), 0));
             ball->getRigidbody()->setVelocity(cyclone::Vector3(0, 0, 0));
             ball->getRigidbody()->setAngularVelocity(cyclone::Vector3(0, 0, 0));
             resetBall = false;
