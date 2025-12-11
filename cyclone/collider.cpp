@@ -332,6 +332,12 @@ namespace cyclone {
         real denominator = contact->normal.scalarProduct(contact->normal * (*contact->body[0]->getInverseMass() + *contact->body[1]->getInverseMass()));
         denominator += ((*contact->body[0]->getInverseInertiaTensor() * offsetA.vectorProduct(contact->normal)).vectorProduct(offsetA) + (*contact->body[1]->getInverseInertiaTensor() * offsetB.vectorProduct(contact->normal)).vectorProduct(offsetB)).scalarProduct(contact->normal);
         const real J = numerator / denominator;
+        Vector3 torqueA =  (*contact->body[0]->getInverseInertiaTensor()) * (offsetA.vectorProduct(contact->normal * J));
+        Vector3 torqueB =  (*contact->body[1]->getInverseInertiaTensor()) * (offsetB.vectorProduct(-contact->normal * J));
+        if(*contact->body[0]->getInverseMass() != 0)
+            contact->body[0]->addTorque(torqueA * 1000);
+        if(*contact->body[1]->getInverseMass() != 0)
+        contact->body[1]->addTorque(torqueB * 1000);
     }
 
     void ContactResolver::resolveInterpenetration(const Contact *contact) {

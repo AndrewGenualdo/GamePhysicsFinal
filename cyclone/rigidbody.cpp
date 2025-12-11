@@ -179,6 +179,10 @@ cyclone::Rigidbody::Rigidbody()  {
     torqueAccum = Vector3(0, 0, 0);
     angularDamping = 1;
     inverseInertiaTensor = Matrix3();
+    inverseInertiaTensor.data[0] = 1;
+    inverseInertiaTensor.data[4] = 1;
+    inverseInertiaTensor.data[8] = 1;
+    calculateDerivedData();
     inverseInertiaTensorWorld = Matrix3();
     transformMatrix = Matrix4();
 }

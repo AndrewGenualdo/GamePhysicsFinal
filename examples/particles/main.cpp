@@ -141,7 +141,7 @@ int main() {
                     Vector2 mouseDelta = mouseEnd - mouseStart;
                     ball->getRigidbody()->addImpulse(cyclone::Vector3(-mouseDelta.x * mouseMult, 0, -mouseDelta.y * mouseMult));
                     //ball->getRigidbody()->addTorque(cyclone::Vector3(rotation * 100 / deltaTime, rotation * 100 / deltaTime, rotation * 100 / deltaTime));
-                    ball->getRigidbody()->setAngularVelocity(cyclone::Vector3(0, 0, rotation));
+                    ball->getRigidbody()->addTorque({0,0,rotation * 1000});
                     isDragging = false;
                 }
                 else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
