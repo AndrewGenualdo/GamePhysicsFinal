@@ -353,7 +353,7 @@ namespace cyclone {
                     tangent.scalarProduct((*contact->body[1]->getInverseInertiaTensor() * (rB.vectorProduct(tangent))).vectorProduct(rB));
             if(frictionalMass > 0)
             {
-                real frictionCoeff = 1.0f; //hardcoded for now
+                real frictionCoeff = 0.5f; //hardcoded for now
                 real Jt = -dv.scalarProduct(tangent) * frictionCoeff / frictionalMass;
                 if(*contact->body[0]->getInverseMass() > 0)
                 {
