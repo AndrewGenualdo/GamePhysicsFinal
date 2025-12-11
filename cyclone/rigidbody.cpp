@@ -142,11 +142,6 @@ void cyclone::Rigidbody::setInertiaTensor(const Matrix3 &inertiaTensor) {
     inverseInertiaTensor.setInverse(inertiaTensor);
 }
 
-cyclone::real cyclone::Rigidbody::getMass()
-{
-    if (inverseMass == 0) return 0;
-    return 1 / inverseMass;
-}
 
 void cyclone::Rigidbody::addRotation(Vector3 vector3)
 {
